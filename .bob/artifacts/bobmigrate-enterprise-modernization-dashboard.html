@@ -1,0 +1,268 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BobMigrate — Enterprise Modernization Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    background: #0d1117;
+    color: #e6edf3;
+    padding: 32px 16px 56px;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+
+  /* Header */
+  .header { margin-bottom: 28px; }
+  .header h1 { font-size: 20px; font-weight: 700; color: #e6edf3; }
+  .header .meta { font-size: 12px; color: #8b949e; margin-top: 4px; }
+  .branch-badge {
+    display: inline-block; background: #1c2128; border: 1px solid #30363d;
+    border-radius: 4px; padding: 1px 8px; font-family: "Courier New", monospace;
+    font-size: 12px; color: #79c0ff; margin-right: 8px;
+  }
+  .commit-badge {
+    display: inline-block; background: #1c2128; border: 1px solid #30363d;
+    border-radius: 4px; padding: 1px 8px; font-family: "Courier New", monospace;
+    font-size: 12px; color: #d2a8ff;
+  }
+
+  /* Metric cards */
+  .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 32px; }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .card .val { font-size: 24px; font-weight: 700; }
+  .card .lbl { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 3px; }
+  .green .val { color: #3fb950; }
+  .blue .val  { color: #79c0ff; }
+  .purple .val{ color: #d2a8ff; }
+  .yellow .val{ color: #e3b341; }
+  .teal .val  { color: #39d353; }
+
+  /* Section */
+  h2 { font-size: 13px; font-weight: 600; color: #8b949e; text-transform: uppercase;
+       letter-spacing: 0.06em; margin: 28px 0 12px; border-bottom: 1px solid #21262d; padding-bottom: 6px; }
+
+  /* File block */
+  .file-block { background: #161b22; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 18px; overflow: hidden; }
+  .file-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: #1c2128; border-bottom: 1px solid #30363d;
+  }
+  .file-name { font-family: "Courier New", monospace; font-size: 13px; color: #e6edf3; font-weight: 600; }
+  .tag {
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .tag-pydantic { background: #2d1c63; color: #d2a8ff; border: 1px solid #6e40c9; }
+  .tag-fastapi  { background: #0e2a1a; color: #3fb950; border: 1px solid #238636; }
+
+  /* Diff table */
+  .diff-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .diff-table th { padding: 8px 12px; text-align: left; font-size: 10px; text-transform: uppercase;
+                   letter-spacing: 0.05em; color: #8b949e; background: #161b22; border-bottom: 1px solid #21262d; }
+  .diff-table td { padding: 7px 12px; vertical-align: top; border-bottom: 1px solid #21262d; }
+  .diff-table tr:last-child td { border-bottom: none; }
+  .rn { color: #6e7681; font-size: 11px; width: 24px; }
+  .rule-name { color: #8b949e; white-space: nowrap; padding-right: 8px; }
+  .diff-old {
+    font-family: "Courier New", monospace;
+    background: #3d1c1c; color: #ffa198;
+    padding: 2px 6px; border-radius: 3px;
+    border-left: 3px solid #f85149;
+    display: block; margin-bottom: 3px; word-break: break-all; font-size: 11.5px;
+  }
+  .diff-new {
+    font-family: "Courier New", monospace;
+    background: #0c2a1a; color: #7ee787;
+    padding: 2px 6px; border-radius: 3px;
+    border-left: 3px solid #3fb950;
+    display: block; word-break: break-all; font-size: 11.5px;
+  }
+
+  /* Terminal blocks */
+  .terminal {
+    background: #010409; border: 1px solid #30363d; border-radius: 8px;
+    font-family: "Courier New", monospace; font-size: 12px; line-height: 1.75;
+    padding: 16px 18px; white-space: pre; overflow-x: auto; margin-bottom: 18px;
+  }
+  .t-prompt { color: #6e7681; }
+  .t-pass { color: #3fb950; font-weight: 600; }
+  .t-ok   { color: #39d353; font-weight: 700; }
+  .t-blue { color: #79c0ff; }
+  .t-yellow { color: #e3b341; }
+  .t-purple { color: #d2a8ff; }
+  .t-dim  { color: #6e7681; }
+  .t-head { color: #e3b341; }
+
+  /* Risk badge */
+  .risk-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .risk-badge {
+    background: #0e2a1a; border: 1px solid #238636; color: #3fb950;
+    font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 20px;
+  }
+  .risk-note { color: #8b949e; font-size: 12px; }
+
+  footer {
+    text-align: center; margin-top: 48px; padding-top: 16px;
+    border-top: 1px solid #21262d; font-size: 12px; color: #6e7681;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  
+  <div class="header">
+    <h1>BobMigrate — Enterprise Modernization Dashboard</h1>
+    <div class="meta" style="margin-top:8px">
+      <span class="branch-badge">feature/bobmigrate-modernization</span>
+      <span class="commit-badge">9ef96e6</span>
+      <span style="color:#8b949e;font-size:12px;margin-left:6px">Pydantic v1→v2 · Flask→FastAPI · mypy · Benchmark · Git</span>
+    </div>
+  </div>
+
+  
+  <div class="metrics">
+    <div class="card blue"><div class="val">3</div><div class="lbl">Files Modified</div></div>
+    <div class="card purple"><div class="val">28</div><div class="lbl">Rules Applied</div></div>
+    <div class="card green"><div class="val">6/6</div><div class="lbl">Tests Passed</div></div>
+    <div class="card teal"><div class="val">0</div><div class="lbl">mypy Errors</div></div>
+    <div class="card yellow"><div class="val">59K</div><div class="lbl">ops/sec</div></div>
+  </div>
+
+  
+  <div class="risk-row">
+    <span class="risk-badge">🟢 RISK: LOW</span>
+    <span class="risk-note">All public HTTP routes, payloads, and status codes unchanged. Breaking changes confined to internal Python method names.</span>
+  </div>
+
+  
+  <h2>File Diffs — src/user_model.py</h2>
+  <div class="file-block">
+    <div class="file-header">
+      <span class="tag tag-pydantic">Pydantic v1 → v2</span>
+      <span class="file-name">src/user_model.py</span>
+    </div>
+    <table class="diff-table">
+      <thead><tr><th>#</th><th>Rule</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td class="rn">1</td><td class="rule-name">Imports</td><td><span class="diff-old">from pydantic import validator, root_validator</span><span class="diff-new">from pydantic import field_validator, model_validator, ConfigDict</span></td></tr>
+        <tr><td class="rn">2</td><td class="rule-name">regex → pattern</td><td><span class="diff-old">Field(..., regex=r'^\d{5}(-\d{4})?$')</span><span class="diff-new">Field(..., pattern=r'^\d{5}(-\d{4})?$')</span></td></tr>
+        <tr><td class="rn">3</td><td class="rule-name">min_items → min_length</td><td><span class="diff-old">Field(default_factory=list, min_items=1)</span><span class="diff-new">Field(default_factory=list, min_length=1)</span></td></tr>
+        <tr><td class="rn">4</td><td class="rule-name">Address config</td><td><span class="diff-old">class Config: str_strip_whitespace=True, allow_mutation=False</span><span class="diff-new">model_config = ConfigDict(str_strip_whitespace=True, frozen=True)</span></td></tr>
+        <tr><td class="rn">5</td><td class="rule-name">UserModel config</td><td><span class="diff-old">class Config: str_strip_whitespace, orm_mode=True, extra='forbid'</span><span class="diff-new">model_config = ConfigDict(str_strip_whitespace=True, from_attributes=True, extra='forbid')</span></td></tr>
+        <tr><td class="rn">6</td><td class="rule-name">@validator → @field_validator</td><td><span class="diff-old">@validator('username') / @validator('role')</span><span class="diff-new">@field_validator('username') + @classmethod / @field_validator('role') + @classmethod</span></td></tr>
+        <tr><td class="rn">7</td><td class="rule-name">@root_validator → @model_validator</td><td><span class="diff-old">@root_validator(pre=True)</span><span class="diff-new">@model_validator(mode='before') + @classmethod</span></td></tr>
+        <tr><td class="rn">8</td><td class="rule-name">Syntax fix</td><td><span class="diff-old">def to_compact_dict((self)  ← stray parenthesis</span><span class="diff-new">def to_compact_dict(self)</span></td></tr>
+        <tr><td class="rn">9</td><td class="rule-name">.dict() → .model_dump()</td><td><span class="diff-old">self.dict(exclude_unset=True, exclude_none=True)</span><span class="diff-new">self.model_dump(exclude_unset=True, exclude_none=True)</span></td></tr>
+        <tr><td class="rn">10</td><td class="rule-name">.copy() → .model_copy()</td><td><span class="diff-old">self.copy(update={"role": new_role})</span><span class="diff-new">self.model_copy(update={"role": new_role})</span></td></tr>
+        <tr><td class="rn">11</td><td class="rule-name">parse_raw → model_validate_json</td><td><span class="diff-old">cls.parse_raw(json_str)</span><span class="diff-new">cls.model_validate_json(json_str)</span></td></tr>
+        <tr><td class="rn">12</td><td class="rule-name">parse_obj → model_validate</td><td><span class="diff-old">cls.parse_obj(obj)</span><span class="diff-new">cls.model_validate(obj)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  
+  <h2>File Diffs — src/config_model.py</h2>
+  <div class="file-block">
+    <div class="file-header">
+      <span class="tag tag-pydantic">Pydantic v1 → v2</span>
+      <span class="file-name">src/config_model.py</span>
+    </div>
+    <table class="diff-table">
+      <thead><tr><th>#</th><th>Rule</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td class="rn">1</td><td class="rule-name">Imports</td><td><span class="diff-old">from pydantic import validator</span><span class="diff-new">from pydantic import field_validator, ConfigDict</span></td></tr>
+        <tr><td class="rn">2</td><td class="rule-name">SecuritySettings config</td><td><span class="diff-old">class Config: allow_mutation=False, extra='forbid'</span><span class="diff-new">model_config = ConfigDict(frozen=True, extra='forbid')</span></td></tr>
+        <tr><td class="rn">3</td><td class="rule-name">AppConfig config</td><td><span class="diff-old">class Config: str_strip_whitespace, allow_mutation=False, orm_mode=True</span><span class="diff-new">model_config = ConfigDict(str_strip_whitespace=True, frozen=True, from_attributes=True)</span></td></tr>
+        <tr><td class="rn">4</td><td class="rule-name">@validator → @field_validator</td><td><span class="diff-old">@validator('environment')</span><span class="diff-new">@field_validator('environment') + @classmethod</span></td></tr>
+        <tr><td class="rn">5</td><td class="rule-name">.dict() → .model_dump()</td><td><span class="diff-old">self.dict()</span><span class="diff-new">self.model_dump()</span></td></tr>
+        <tr><td class="rn">6</td><td class="rule-name">parse_obj → model_validate</td><td><span class="diff-old">cls.parse_obj(data)</span><span class="diff-new">cls.model_validate(data)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  
+  <h2>File Diffs — src/api_service.py</h2>
+  <div class="file-block">
+    <div class="file-header">
+      <span class="tag tag-fastapi">Flask → FastAPI</span>
+      <span class="file-name">src/api_service.py</span>
+    </div>
+    <table class="diff-table">
+      <thead><tr><th>#</th><th>Rule</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td class="rn">1</td><td class="rule-name">Framework import</td><td><span class="diff-old">from flask import Flask, request, jsonify</span><span class="diff-new">from fastapi import FastAPI, Header, HTTPException, status</span></td></tr>
+        <tr><td class="rn">2</td><td class="rule-name">App init</td><td><span class="diff-old">app = Flask(__name__)</span><span class="diff-new">app = FastAPI(title="Migrated Modern API")</span></td></tr>
+        <tr><td class="rn">3</td><td class="rule-name">GET route</td><td><span class="diff-old">@app.route('/health', methods=['GET'])</span><span class="diff-new">@app.get('/health')</span></td></tr>
+        <tr><td class="rn">4</td><td class="rule-name">POST routes + status</td><td><span class="diff-old">@app.route('/api/v1/users', methods=['POST'])</span><span class="diff-new">@app.post('/api/v1/users', status_code=201)</span></td></tr>
+        <tr><td class="rn">5</td><td class="rule-name">Path param syntax</td><td><span class="diff-old">/api/v1/users/&lt;int:user_id&gt;/promote</span><span class="diff-new">/api/v1/users/{user_id}/promote</span></td></tr>
+        <tr><td class="rn">6</td><td class="rule-name">Header injection</td><td><span class="diff-old">api_key = request.headers.get('X-API-Key')</span><span class="diff-new">x_api_key: Optional[str] = Header(None)</span></td></tr>
+        <tr><td class="rn">7</td><td class="rule-name">Body injection</td><td><span class="diff-old">raw_data = request.get_json();  UserModel.parse_from_dict_obj(raw_data)</span><span class="diff-new">payload: UserModel  (FastAPI dependency injection)</span></td></tr>
+        <tr><td class="rn">8</td><td class="rule-name">Error responses</td><td><span class="diff-old">return jsonify({"detail": "..."}), 4xx</span><span class="diff-new">raise HTTPException(status_code=4xx, detail="...")</span></td></tr>
+        <tr><td class="rn">9</td><td class="rule-name">Success responses</td><td><span class="diff-old">return jsonify({...}), 200/201</span><span class="diff-new">return {...}  (plain dict)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  
+  <h2>mypy Static Analysis</h2>
+  <div class="terminal"><span class="t-prompt">$ python -m mypy src/ --ignore-missing-imports</span>
+
+<span class="t-ok">Success: no issues found in 4 source files</span></div>
+
+  
+  <h2>Performance Benchmark</h2>
+  <div class="terminal"><span class="t-prompt">$ python -m tests.benchmark</span>
+
+<span class="t-head">--- BENCHMARK RESULTS ---</span>
+<span class="t-blue">Total Iterations:     </span> 10,000
+<span class="t-blue">Total Execution Time: </span> 0.1693 seconds
+<span class="t-yellow">Throughput:           </span><span class="t-ok"> 59,076.80 ops/sec</span></div>
+
+  
+  <h2>pytest Execution Log</h2>
+  <div class="terminal"><span class="t-prompt">$ python -m pytest tests/ -v</span>
+
+<span class="t-head">============================= test session starts =============================</span>
+<span class="t-dim">platform win32 -- Python 3.9.5, pytest-8.4.2, pluggy-1.6.0
+rootdir: C:\Users\MIS\BobMigrate
+plugins: anyio-4.12.1
+collected 6 items</span>
+
+<span class="t-blue">tests/test_api.py</span>::test_health_check                   <span class="t-pass">PASSED</span>    [ 16%]
+<span class="t-blue">tests/test_api.py</span>::test_create_user_flow               <span class="t-pass">PASSED</span>    [ 33%]
+<span class="t-blue">tests/test_api.py</span>::test_config_validation_endpoint     <span class="t-pass">PASSED</span>    [ 50%]
+<span class="t-blue">tests/test_models.py</span>::test_user_model_legacy_features   <span class="t-pass">PASSED</span>    [ 66%]
+<span class="t-blue">tests/test_models.py</span>::test_user_model_validation_failures <span class="t-pass">PASSED</span>   [ 83%]
+<span class="t-blue">tests/test_models.py</span>::test_config_model_sanitization     <span class="t-pass">PASSED</span>    [100%]
+
+<span class="t-ok">============================== 6 passed in 1.48s ==============================</span></div>
+
+  
+  <h2>Git Audit</h2>
+  <div class="terminal"><span class="t-prompt">$ git log --oneline</span>
+
+<span class="t-purple">9ef96e6</span> <span class="t-blue">(HEAD -&gt; feature/bobmigrate-modernization)</span>
+        refactor(core): automated Pydantic v2 &amp; FastAPI modernization via BobMigrate
+
+<span class="t-dim">17 files changed, 363 insertions(+)
+ src/api_service.py · src/config_model.py · src/user_model.py
+ tests/benchmark.py · tests/test_api.py · tests/test_models.py
+ docs/flask_to_fastapi_guide.md · docs/pydantic_v1_to_v2_guide.md
+ requirements.txt</span></div>
+
+</div>
+<footer>Made with IBM Bob</footer>
+</body>
+</html>

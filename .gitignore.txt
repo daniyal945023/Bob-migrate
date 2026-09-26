@@ -1,0 +1,17 @@
+# Virtual Environment
+venv/
+
+# IDE & Tool Caches
+.bob/
+.mypy_cache/
+.pytest_cache/
+
+# Python Compiled & Cache Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS System Files
+.DS_Store
+Thumbs.db
